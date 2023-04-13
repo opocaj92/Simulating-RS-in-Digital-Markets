@@ -2,7 +2,7 @@ import copy
 import argparse
 from tqdm import tqdm
 
-from experiment_utils import *
+from utils import *
 
 VERBOSE = True
 
@@ -38,7 +38,7 @@ def main(params, models, running_setting):
 
 if __name__ == "__main__":
     # Command line arguments
-    parser = argparse.ArgumentParser(description = "experiment_main")
+    parser = argparse.ArgumentParser(description = "main")
     parser.add_argument("--output_dir", "-o", required = False, default = "results")
     parser.add_argument("--params_subdir", "-d", required = True)
     parser.add_argument("--params_name", "-p", required = True) # fname without .py
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     # Load params
     import importlib
     tmp = f"{args.params_subdir}." if args.params_subdir is not None else ""
-    module = "experiment_params.%s%s" % (tmp, params_name)
+    module = "params.%s%s" % (tmp, params_name)
     params_module = importlib.import_module(module, package = None)
     params = params_module.params
 
@@ -70,9 +70,9 @@ if __name__ == "__main__":
     # Copy params file to experiment folder
     import shutil
     if args.params_subdir is not None:
-        src = os.path.join("experiment_params", args.params_subdir, f"{params_name}.py")
+        src = os.path.join("params", args.params_subdir, f"{params_name}.py")
     else:
-        src = os.path.join("experiment_params", f"{params_name}.py")
+        src = os.path.join("params", f"{params_name}.py")
     dst = os.path.join(savepath, "params.py")
     shutil.copyfile(src, dst)
 
