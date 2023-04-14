@@ -10,9 +10,12 @@ from scipy import sparse
 import pandas as pd
 
 from trecs.components import Users, Items, Creators
-from trecs.models import PopularityRecommender, ContentFiltering, ImplicitMF, RandomRecommender, IdealRecommender, EnsembleHybrid, MixedHybrid
-from trecs.metrics import InteractionMeasurement, MSEMeasurement, RecommendationMeasurement, InteractionMetric, RecommendationMetric, ScoreMetric, CorrelationMeasurement, RecommendationRankingMetric, InteractionRankingMetric, VaryingInteractionAttributesSimilarity, VaryingInteractionAttrJaccard, VaryingRecSimilarity, VaryingRecAttributesSimilarity, VaryingRecSummedAttributesSimilarity, most_similar_users_pair, least_similar_users_pair, all_users_pairs, NNLSCoefficientsxMetric, NNLSCoefficientsAMetric, NNLSCoefficientsbMetric
+from trecs.models import PopularityRecommender, ContentFiltering, ImplicitMF, RandomRecommender
+from trecs.metrics import InteractionMeasurement, MSEMeasurement
 from trecs.random import Generator
+
+from trecs_plus.models import IdealRecommender, EnsembleHybrid, MixedHybrid
+from trecs_plus.metrics import RecommendationMeasurement, InteractionMetric, RecommendationMetric, ScoreMetric, CorrelationMeasurement, RecommendationRankingMetric, InteractionRankingMetric, VaryingInteractionAttributesSimilarity, VaryingInteractionAttrJaccard, VaryingRecSimilarity, VaryingRecAttributesSimilarity, VaryingRecSummedAttributesSimilarity, most_similar_users_pair, least_similar_users_pair, all_users_pairs, NNLSCoefficientsxMetric, NNLSCoefficientsAMetric, NNLSCoefficientsbMetric
 
 models = {
     "popularity_recommender": PopularityRecommender,
@@ -88,7 +91,7 @@ def run_experiment(params, model_name, tmp_results, running_setting):
                                        num_users = params["num_users"],
                                        size = (params["num_users"], params["num_attributes"]),
                                        attention_exp = params["attention_exp"],
-                                       drift = params["drift"],
+                                       drift = 0,
                                        individual_rationality = params["individual_rationality"]
                                        )
     # Create the items profiles
@@ -178,6 +181,7 @@ def run_experiment(params, model_name, tmp_results, running_setting):
         extra_args = dict(disable_tqdm = True)
 
     # Do the simulation
+    rec.users.drift = params["drift"]
     rec.run(timesteps = params["timesteps"],
             train_between_steps = params["train_between_steps"],
             random_items_per_iter = params["random_items_per_iter"],
@@ -254,7 +258,6 @@ def process_tmp_results(params, tmp_results, running_setting):
     windowed_modified_ih = np.array([modified_ih[t] - modified_ih[t - 10] if t - 10 > params["training"] else modified_ih[t] for t in range(modified_ih.shape[0])])
     sorted_ms = -np.sort(-(windowed_modified_ih / np.sum(windowed_modified_ih, axis = 1, keepdims = True)))
     tmp_results[-1]["cn"] = np.array([np.sum(ms[:int(items_at_step[i] * 0.1)]) for i, ms in enumerate(sorted_ms)])
-    tmp_results[-1]["cn_old"] = np.sum(-np.sort(-(windowed_modified_ih[:, :params["num_items"]] / np.sum(windowed_modified_ih, axis = 1, keepdims = True)))[:, :int(params["num_items"] * 0.1)], axis = 1)
     tmp_results[-1]["cn_entrant"] = np.sum(windowed_modified_ih[:, params["num_items"]:] / np.sum(windowed_modified_ih, axis = 1, keepdims = True), axis = 1)
 
     if np.isnan(tmp_results[-1]["correlation"]).all():
@@ -553,11 +556,11 @@ def plot_results(params, results, savepath, running_setting, has_std = True):
 
     # Save all the metrics and measures into a csv file for later use
     if running_setting["more_computation"]:
-        measures = ["cn", "cn_old", "cn_entrant", "forced_cn", "interaction_similarity_most", "interaction_similarity_all", "interaction_similarity_least", "interaction_attr_similarity_most", "interaction_attr_similarity_all", "interaction_attr_similarity_least", "rec_similarity_most", "rec_similarity_all", "rec_similarity_least", "rec_attr_similarity_most", "rec_attr_similarity_all", "rec_attr_similarity_least", "rec_summed_attr_similarity_most", "rec_summed_attr_similarity_all", "rec_summed_attr_similarity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
-        labels = ["concentration", "concentration_old", "entry", "forced_items_concentration", "interaction_homogeneity_most", "interaction_homogeneity_all", "interaction_homogeneity_least", "interaction_attr_homogeneity_most", "interaction_attr_homogeneity_all", "interaction_attr_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_all", "rec_homogeneity_least", "rec_attr_homogeneity_most", "rec_attr_homogeneity_all", "rec_attr_homogeneity_least", "rec_summed_attr_homogeneity_most", "rec_summed_attr_homogeneity_all", "rec_summed_attr_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
+        measures = ["cn", "cn_entrant", "forced_cn", "interaction_similarity_most", "interaction_similarity_all", "interaction_similarity_least", "interaction_attr_similarity_most", "interaction_attr_similarity_all", "interaction_attr_similarity_least", "rec_similarity_most", "rec_similarity_all", "rec_similarity_least", "rec_attr_similarity_most", "rec_attr_similarity_all", "rec_attr_similarity_least", "rec_summed_attr_similarity_most", "rec_summed_attr_similarity_all", "rec_summed_attr_similarity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
+        labels = ["concentration", "entry", "forced_items_concentration", "interaction_homogeneity_most", "interaction_homogeneity_all", "interaction_homogeneity_least", "interaction_attr_homogeneity_most", "interaction_attr_homogeneity_all", "interaction_attr_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_all", "rec_homogeneity_least", "rec_attr_homogeneity_most", "rec_attr_homogeneity_all", "rec_attr_homogeneity_least", "rec_summed_attr_homogeneity_most", "rec_summed_attr_homogeneity_all", "rec_summed_attr_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
     else:
-        measures = ["cn", "cn_old", "cn_entrant", "forced_cn", "interaction_similarity_most", "interaction_similarity_least", "rec_similarity_most", "rec_similarity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
-        labels = ["concentration", "concentration_old", "entry", "forced_items_concentration", "interaction_homogeneity_most", "interaction_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
+        measures = ["cn", "cn_entrant", "forced_cn", "interaction_similarity_most", "interaction_similarity_least", "rec_similarity_most", "rec_similarity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
+        labels = ["concentration", "entry", "forced_items_concentration", "interaction_homogeneity_most", "interaction_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
 
     if has_std:
         measures = sum([[m, m + "_std"] for m in measures], [])
@@ -780,9 +783,9 @@ def write_params_file(input_dict, savepath):
 def master_csv(savepath, all_params, running_setting):
     mux = pd.Index([p["exp_index"] for p in all_params], name = "exp_index")
     if running_setting["more_computation"]:
-        labels = ["recommender_system", "timesteps", "concentration", "concentration_old", "entry", "forced_items_concentration", "interaction_homogeneity_most", "interaction_homogeneity_all", "interaction_homogeneity_least", "interaction_attr_homogeneity_most", "interaction_attr_homogeneity_all", "interaction_attr_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_all", "rec_homogeneity_least", "rec_attr_homogeneity_most", "rec_attr_homogeneity_all", "rec_attr_homogeneity_least", "rec_summed_attr_homogeneity_most", "rec_summed_attr_homogeneity_all", "rec_summed_attr_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
+        labels = ["recommender_system", "timesteps", "concentration", "entry", "forced_items_concentration", "interaction_homogeneity_most", "interaction_homogeneity_all", "interaction_homogeneity_least", "interaction_attr_homogeneity_most", "interaction_attr_homogeneity_all", "interaction_attr_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_all", "rec_homogeneity_least", "rec_attr_homogeneity_most", "rec_attr_homogeneity_all", "rec_attr_homogeneity_least", "rec_summed_attr_homogeneity_most", "rec_summed_attr_homogeneity_all", "rec_summed_attr_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
     else:
-        labels = ["recommender_system", "timesteps", "concentration", "concentration_old", "entry", "forced_items_concentration", "interaction_homogeneity_most", "interaction_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
+        labels = ["recommender_system", "timesteps", "concentration", "entry", "forced_items_concentration", "interaction_homogeneity_most", "interaction_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
 
     for app in ["", "_no_startup"]:
         all_sample = []
