@@ -64,7 +64,7 @@ def get_entering_times(results):
 # Create initial experiment parameters
 def get_initialisation_args(params):
     init_args = dict()
-    init_args["real_profiles"] = np.random.randint(0, params["max_preference_per_attribute"], (params["num_users"], params["num_attributes"]))
+    init_args["real_profiles"] = np.random.randint(params["min_preference_per_attribute"], params["max_preference_per_attribute"], (params["num_users"], params["num_attributes"]))
 
     if params["horizontally_differentiated_only"]:
         num_ones = np.random.randint(params["num_attributes"])
