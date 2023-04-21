@@ -772,7 +772,7 @@ def write_params_file(input_dict, savepath):
         f.write("params = dict(\n")
         for k in input_dict.keys():
             if type(input_dict[k]) == str:
-                txt = """ + input_dict[k] + """
+                txt = "'" + input_dict[k] + "'"
             else:
                 txt = str(input_dict[k])
             f.write("    " + str(k) + " = " + txt + ",\n")
