@@ -259,6 +259,7 @@ def process_tmp_results(params, tmp_results, running_setting):
     sorted_ms = -np.sort(-(windowed_modified_ih / np.sum(windowed_modified_ih, axis = 1, keepdims = True)))
     tmp_results[-1]["cn"] = np.array([np.sum(ms[:int(items_at_step[i] * 0.1)]) for i, ms in enumerate(sorted_ms)])
     tmp_results[-1]["cn_entrant"] = np.sum(windowed_modified_ih[:, params["num_items"]:] / np.sum(windowed_modified_ih, axis = 1, keepdims = True), axis = 1)
+    tmp_results[-1]["hhi"] = np.sum(np.square(windowed_modified_ih / np.sum(windowed_modified_ih, axis = 1, keepdims = True)), axis = 1)
 
     if np.isnan(tmp_results[-1]["correlation"]).all():
         tmp_results[-1]["recommendation_quality"] = np.mean(np.concatenate([np.expand_dims(tmp_results[-1]["recommendation_ranking"], 1),
@@ -447,6 +448,20 @@ def plot_results(params, results, savepath, running_setting, has_std = True):
             plt.savefig(os.path.join(savepath, "Concentration" + mode + ".pdf"), bbox_inches = "tight")
             plt.clf()
 
+            # Plot HHI
+            for i, key in enumerate(results.keys()):
+                plt.plot(np.arange(plot_modes[mode][2], plot_modes[mode][0]), results[key]["hhi"][plot_modes[mode][1]:], color = "C" + str(i), label = key)
+                if has_std:
+                    plt.fill_between(np.arange(plot_modes[mode][2], plot_modes[mode][0]), results[key]["hhi"][plot_modes[mode][1]:] - results[key]["hhi_std"][plot_modes[mode][1]:], results[key]["hhi"][plot_modes[mode][1]:] + results[key]["hhi_std"][plot_modes[mode][1]:], color = "C" + str(i), alpha = 0.3)
+            plt.ylim(-0.05, 1.05)
+            plt.xticks([plot_modes[mode][2]] + list(range(0, plot_modes[mode][0], 20))[1:])
+            plt.ylabel("HHI")
+            plt.xlabel("Timestep")
+            plt.legend()
+            # plt.show()
+            plt.savefig(os.path.join(savepath, "HHI" + mode + ".pdf"), bbox_inches = "tight")
+            plt.clf()
+
             # Plot quality of recommendation for each RS
             grid = plt.GridSpec(int(math.ceil(len(results.keys()) / 2)), 4, wspace = 0.8, hspace = 0.9)
             plots = sum([[plt.subplot(grid[i, :2]), plt.subplot(grid[i, 2:])] for i in range(int(math.ceil(len(results.keys()) / 2)) - 1)], [])
@@ -556,11 +571,11 @@ def plot_results(params, results, savepath, running_setting, has_std = True):
 
     # Save all the metrics and measures into a csv file for later use
     if running_setting["more_computation"]:
-        measures = ["cn", "cn_entrant", "forced_cn", "interaction_similarity_most", "interaction_similarity_all", "interaction_similarity_least", "interaction_attr_similarity_most", "interaction_attr_similarity_all", "interaction_attr_similarity_least", "rec_similarity_most", "rec_similarity_all", "rec_similarity_least", "rec_attr_similarity_most", "rec_attr_similarity_all", "rec_attr_similarity_least", "rec_summed_attr_similarity_most", "rec_summed_attr_similarity_all", "rec_summed_attr_similarity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
-        labels = ["concentration", "entry", "forced_items_concentration", "interaction_homogeneity_most", "interaction_homogeneity_all", "interaction_homogeneity_least", "interaction_attr_homogeneity_most", "interaction_attr_homogeneity_all", "interaction_attr_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_all", "rec_homogeneity_least", "rec_attr_homogeneity_most", "rec_attr_homogeneity_all", "rec_attr_homogeneity_least", "rec_summed_attr_homogeneity_most", "rec_summed_attr_homogeneity_all", "rec_summed_attr_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
+        measures = ["cn", "cn_entrant", "forced_cn", "hhi", "interaction_similarity_most", "interaction_similarity_all", "interaction_similarity_least", "interaction_attr_similarity_most", "interaction_attr_similarity_all", "interaction_attr_similarity_least", "rec_similarity_most", "rec_similarity_all", "rec_similarity_least", "rec_attr_similarity_most", "rec_attr_similarity_all", "rec_attr_similarity_least", "rec_summed_attr_similarity_most", "rec_summed_attr_similarity_all", "rec_summed_attr_similarity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
+        labels = ["concentration", "entry", "forced_items_concentration", "hhi", "interaction_homogeneity_most", "interaction_homogeneity_all", "interaction_homogeneity_least", "interaction_attr_homogeneity_most", "interaction_attr_homogeneity_all", "interaction_attr_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_all", "rec_homogeneity_least", "rec_attr_homogeneity_most", "rec_attr_homogeneity_all", "rec_attr_homogeneity_least", "rec_summed_attr_homogeneity_most", "rec_summed_attr_homogeneity_all", "rec_summed_attr_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
     else:
-        measures = ["cn", "cn_entrant", "forced_cn", "interaction_similarity_most", "interaction_similarity_least", "rec_similarity_most", "rec_similarity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
-        labels = ["concentration", "entry", "forced_items_concentration", "interaction_homogeneity_most", "interaction_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
+        measures = ["cn", "cn_entrant", "forced_cn", "hhi", "interaction_similarity_most", "interaction_similarity_least", "rec_similarity_most", "rec_similarity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
+        labels = ["concentration", "entry", "forced_items_concentration", "hhi", "interaction_homogeneity_most", "interaction_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
 
     if has_std:
         measures = sum([[m, m + "_std"] for m in measures], [])
@@ -783,9 +798,9 @@ def write_params_file(input_dict, savepath):
 def master_csv(savepath, all_params, running_setting):
     mux = pd.Index([p["exp_index"] for p in all_params], name = "exp_index")
     if running_setting["more_computation"]:
-        labels = ["recommender_system", "timesteps", "concentration", "entry", "forced_items_concentration", "interaction_homogeneity_most", "interaction_homogeneity_all", "interaction_homogeneity_least", "interaction_attr_homogeneity_most", "interaction_attr_homogeneity_all", "interaction_attr_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_all", "rec_homogeneity_least", "rec_attr_homogeneity_most", "rec_attr_homogeneity_all", "rec_attr_homogeneity_least", "rec_summed_attr_homogeneity_most", "rec_summed_attr_homogeneity_all", "rec_summed_attr_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
+        labels = ["recommender_system", "timesteps", "concentration", "entry", "forced_items_concentration", "hhi", "interaction_homogeneity_most", "interaction_homogeneity_all", "interaction_homogeneity_least", "interaction_attr_homogeneity_most", "interaction_attr_homogeneity_all", "interaction_attr_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_all", "rec_homogeneity_least", "rec_attr_homogeneity_most", "rec_attr_homogeneity_all", "rec_attr_homogeneity_least", "rec_summed_attr_homogeneity_most", "rec_summed_attr_homogeneity_all", "rec_summed_attr_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
     else:
-        labels = ["recommender_system", "timesteps", "concentration", "entry", "forced_items_concentration", "interaction_homogeneity_most", "interaction_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
+        labels = ["recommender_system", "timesteps", "concentration", "entry", "forced_items_concentration", "hhi", "interaction_homogeneity_most", "interaction_homogeneity_least", "rec_homogeneity_most", "rec_homogeneity_least", "mse", "score", "correlation", "recommendation_ranking", "interaction_ranking", "recommendation_quality"]
 
     for app in ["", "_no_startup"]:
         all_sample = []
