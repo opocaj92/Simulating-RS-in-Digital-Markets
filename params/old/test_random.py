@@ -23,4 +23,5 @@ params = dict(
     forced_period = 0,
     shuffle_forced_items = False,
     individual_rationality = False,
+    prop_items_for_concentration_metric = 0.1,
 )
