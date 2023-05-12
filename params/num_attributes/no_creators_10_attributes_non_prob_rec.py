@@ -11,7 +11,6 @@ params = dict(
     num_attributes = 10,
     min_preference_per_attribute = 0,
 	max_preference_per_attribute = 5,
-    max_item_score = 10,
     runs = 1,
     num_items_per_iter = 10,
     random_newly_created = False,
