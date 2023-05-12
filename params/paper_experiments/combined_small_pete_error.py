@@ -22,5 +22,6 @@ params = dict(
     forced_period = 20,
     shuffle_forced_items = False,
     individual_rationality = False,
+    sort_rec_per_popularity = False,
     prop_items_for_concentration_metric = 0.1,
 )

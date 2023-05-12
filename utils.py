@@ -117,6 +117,7 @@ def run_experiment(params, model_name, tmp_results, running_setting):
                                  num_forced_items = params["num_forced_items"],
                                  forced_items = init_args["forced_items"] if params["num_forced_items"] > 0 else None,
                                  forced_period = params["forced_period"],
+                                 sort_rec_per_popularity = params["sort_rec_per_popularity"]
                                  )
     else:
         rec = models[model_name](actual_user_representation = actual_user_representation,
@@ -128,6 +129,7 @@ def run_experiment(params, model_name, tmp_results, running_setting):
                                  num_forced_items = params["num_forced_items"],
                                  forced_items = init_args["forced_items"] if params["num_forced_items"] > 0 else None,
                                  forced_period = params["forced_period"],
+                                 sort_rec_per_popularity = params["sort_rec_per_popularity"]
                                  )
 
     # Add metrics
