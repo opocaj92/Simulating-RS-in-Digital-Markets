@@ -75,7 +75,7 @@ def get_initialisation_args(params):
 
     init_args["real_types"] = np.random.random((params["num_creators"], params["num_attributes"])) if params["num_creators"] > 0 else None
 
-    if params["num_forced_items"] > 0 and params["forced_period"] > 0:
+    if params["num_forced_items"] > 0:
         init_args["forced_items"] = np.argsort(-np.sum(init_args["real_attributes"], axis = 0))[:(int(params["shuffle_forced_items"]) + 1) * params["num_forced_items"]]
         #init_args["forced_items"] = np.random.randint(0, params["num_items"], size = params["num_forced_items"])
     return init_args
