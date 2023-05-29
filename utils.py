@@ -67,17 +67,27 @@ def get_initialisation_args(params):
     init_args["real_profiles"] = np.random.randint(params["min_preference_per_attribute"], params["max_preference_per_attribute"], (params["num_users"], params["num_attributes"]))
 
     if params["horizontally_differentiated_only"]:
-        num_ones = np.random.randint(params["num_attributes"])
+        num_ones = np.random.randint(low = 1, high = params["num_attributes"] + 1)
+        print("horizontally_differentiated_only, num_ones:", num_ones)
         base_vector = np.concatenate([np.ones(num_ones), np.zeros(params["num_attributes"] - num_ones)])
         init_args["real_attributes"] = np.array([np.random.permutation(base_vector) for _ in range(params["num_items"])]).T
     else:
-        init_args["real_attributes"] = Generator().binomial(n = 1, p = 0.5, size = (params["num_attributes"], params["num_items"]))
+        items = []
+        while len(items) < params["num_items"]:
+            tmp = Generator().binomial(n = 1, p = 0.5, size = params["num_attributes"])
+            if np.sum(tmp) > 0:
+                items.append(tmp)
+        init_args["real_attributes"] = np.vstack(items).T
 
     init_args["real_types"] = np.random.random((params["num_creators"], params["num_attributes"])) if params["num_creators"] > 0 else None
 
     if params["num_forced_items"] > 0:
-        init_args["forced_items"] = np.argsort(-np.sum(init_args["real_attributes"], axis = 0))[:(int(params["shuffle_forced_items"]) + 1) * params["num_forced_items"]]
-        #init_args["forced_items"] = np.random.randint(0, params["num_items"], size = params["num_forced_items"])
+        item_quality = np.sum(init_args["real_attributes"], axis = 0)
+        item_quality = [q * params['softmax_mult_for_forced_items'] for q in item_quality]
+        probabilities =  np.exp(item_quality)
+        probabilities /= np.sum(probabilities)
+        init_args["forced_items"] = np.random.choice(a = np.arange(params['num_items']), size = params['num_forced_items'], replace = False, p = probabilities)
+
     return init_args
 
 
@@ -114,7 +124,6 @@ def run_experiment(params, model_name, tmp_results, running_setting):
                                  num_items_per_iter = params["num_items_per_iter"],
                                  probabilistic_recommendations = params["probabilistic_recommendations"],
                                  random_newly_created = params["random_newly_created"],
-                                 num_forced_items = params["num_forced_items"],
                                  forced_items = init_args["forced_items"] if params["num_forced_items"] > 0 else None,
                                  forced_period = params["forced_period"],
                                  sort_rec_per_popularity = params["sort_rec_per_popularity"]
@@ -126,7 +135,6 @@ def run_experiment(params, model_name, tmp_results, running_setting):
                                  num_items_per_iter = params["num_items_per_iter"],
                                  probabilistic_recommendations = params["probabilistic_recommendations"] if model_name != "random_recommender" else False,
                                  random_newly_created = params["random_newly_created"],
-                                 num_forced_items = params["num_forced_items"],
                                  forced_items = init_args["forced_items"] if params["num_forced_items"] > 0 else None,
                                  forced_period = params["forced_period"],
                                  sort_rec_per_popularity = params["sort_rec_per_popularity"]
