@@ -82,10 +82,9 @@ def get_initialisation_args(params):
     init_args["real_types"] = np.random.random((params["num_creators"], params["num_attributes"])) if params["num_creators"] > 0 else None
 
     if params["num_forced_items"] > 0:
-        item_quality = np.sum(init_args["real_attributes"], axis = 0)
-        item_quality = [q * params['softmax_mult_for_forced_items'] for q in item_quality]
+        item_quality = np.sum(init_args["real_attributes"], axis = 0) * params['softmax_mult_for_forced_items']
         probabilities =  np.exp(item_quality)
-        probabilities /= np.sum(probabilities)
+        probabilities /= np.sum(probabilities) + 1e-32
         init_args["forced_items"] = np.random.choice(a = np.arange(params['num_items']), size = params['num_forced_items'], replace = False, p = probabilities)
 
     return init_args
