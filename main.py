@@ -10,28 +10,37 @@ def main(params, models, running_setting):
     # Initialise dicts that will hold results
     results = {}
     full_tmp_results = {}
+    tmp_results = {}
 
-    # Loop over recommender models
     for model_name in models:
-        if VERBOSE:
-            print()
-            print("Simulating the " + model_name + " RS model")
-
-        # Initialise results sub containers
         results[model_name] = {}
         full_tmp_results[model_name] = {}
-        tmp_results = []
+        tmp_results[model_name] = []
 
-        # Do the experiment run-many times and aggregate (mean)
-        for r in range(params["runs"]):
+    # Do the experiment run-many times and aggregate (mean)
+    for r in range(params["runs"]):
+        if VERBOSE:
+            print()
+            print("Run #" + str(r + 1))
+
+        # Get representations
+        init_args = get_initialisation_args(params)
+
+        # Loop over recommender models
+        for model_name in models:
+            if VERBOSE:
+                print()
+                print("Simulating the " + model_name + " RS model")
+
             # Run the experiment
-            tmp_results = run_experiment(params, model_name, tmp_results, running_setting)
+            tmp_results[model_name] = run_experiment(params, model_name, tmp_results[model_name], running_setting, init_args)
 
             # Adjust data in tmp_results in an experiment specific way
-            tmp_results = process_tmp_results(params, tmp_results, running_setting)
+            tmp_results[model_name] = process_tmp_results(params, tmp_results[model_name], running_setting)
 
+    for model_name in models:
         # Update results and results_std from tmp_results
-        results, full_tmp_results = results_from_tmp_results(results, full_tmp_results, model_name, tmp_results)
+        results, full_tmp_results = results_from_tmp_results(results, full_tmp_results, model_name, tmp_results[model_name])
 
     return results, full_tmp_results
 

@@ -92,10 +92,7 @@ def get_initialisation_args(params):
 
 
 # Main execution function
-def run_experiment(params, model_name, tmp_results, running_setting):
-    # Get representations
-    init_args = get_initialisation_args(params)
-
+def run_experiment(params, model_name, tmp_results, running_setting, init_args):
     # Create the users profiles
     actual_user_representation = Users(actual_user_profiles = init_args["real_profiles"],
                                        num_users = params["num_users"],
@@ -127,6 +124,18 @@ def run_experiment(params, model_name, tmp_results, running_setting):
                                  forced_items = init_args["forced_items"] if params["num_forced_items"] > 0 else None,
                                  forced_period = params["forced_period"],
                                  sort_rec_per_popularity = params["sort_rec_per_popularity"]
+                                 )
+    elif model_name == "collaborative_filtering":
+        rec = models[model_name](actual_user_representation = actual_user_representation,
+                                 actual_item_representation = actual_item_representation,
+                                 creators = creator,
+                                 num_items_per_iter = params["num_items_per_iter"],
+                                 probabilistic_recommendations = params["probabilistic_recommendations"] if model_name != "random_recommender" else False,
+                                 random_newly_created = params["random_newly_created"],
+                                 forced_items = init_args["forced_items"] if params["num_forced_items"] > 0 else None,
+                                 forced_period = params["forced_period"],
+                                 sort_rec_per_popularity = params["sort_rec_per_popularity"],
+                                 model_params = params["cf_model_params"]
                                  )
     else:
         rec = models[model_name](actual_user_representation = actual_user_representation,
