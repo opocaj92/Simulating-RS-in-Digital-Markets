@@ -21,6 +21,7 @@ models = {
     "popularity_recommender": PopularityRecommender,
     "content_based": ContentFiltering,
     "collaborative_filtering": ImplicitMF,
+    "collaborative_filtering_no_impute": ImplicitMF,
     "random_recommender": RandomRecommender,
     "ideal_recommender": IdealRecommender,
     "ensemble_hybrid": EnsembleHybrid,
@@ -124,7 +125,7 @@ def run_experiment(params, model_name, tmp_results, running_setting, init_args):
                                  forced_period = params["forced_period"],
                                  sort_rec_per_popularity = params["sort_rec_per_popularity"]
                                  )
-    elif model_name == "collaborative_filtering":
+    elif model_name == "collaborative_filtering" or model_name == "collaborative_filtering_no_impute":
         rec = models[model_name](actual_user_representation = actual_user_representation,
                                  actual_item_representation = actual_item_representation,
                                  creators = creator,
@@ -134,7 +135,8 @@ def run_experiment(params, model_name, tmp_results, running_setting, init_args):
                                  forced_items = init_args["forced_items"] if params["num_forced_items"] > 0 else None,
                                  forced_period = params["forced_period"],
                                  sort_rec_per_popularity = params["sort_rec_per_popularity"],
-                                 model_params = params["cf_model_params"]
+                                 model_params = params["cf_model_params"] if "cf_model_params" in params.keys() else None,
+                                 impute_new_items = True if model_name == "collaborative_filtering" else False
                                  )
     else:
         rec = models[model_name](actual_user_representation = actual_user_representation,
@@ -189,11 +191,11 @@ def run_experiment(params, model_name, tmp_results, running_setting, init_args):
     # Pre-train the RS with random interactions
     if params["training"] > 0:
         rec.startup_and_train(timesteps = params["training"], no_new_items = True)
-        if running_setting["save_pdf_plots"] and (model_name == "content_based" or model_name == "collaborative_filtering"):
+        if running_setting["save_pdf_plots"] and (model_name in ["content_based", "collaborative_filtering", "collaborative_filtering_no_impute"]):
             all_interactions_after_startup = rec.all_interactions
 
     # Do not pass in disable_tqdm for ImplicitMF
-    if model_name == "collaborative_filtering":
+    if model_name in ["collaborative_filtering", "collaborative_filtering_no_impute"]:
         extra_args = dict(reset_interactions = False)
     else:
         extra_args = dict(disable_tqdm = True)
@@ -228,7 +230,7 @@ def run_experiment(params, model_name, tmp_results, running_setting, init_args):
             tmp_results[-1]["all_interactions"] = rec.all_interactions.toarray()
             if params["training"] > 0:
                 tmp_results[-1]["all_interactions_after_startup"] = all_interactions_after_startup.toarray()
-        elif model_name == "collaborative_filtering":
+        elif model_name in ["collaborative_filtering", "collaborative_filtering_no_impute"]:
             tmp_results[-1]["all_interactions"] = dataframe_to_sparse(rec.all_interactions, rec.num_users, rec.num_items).toarray()
             if params["training"] > 0:
                 tmp_results[-1]["all_interactions_after_startup"] = dataframe_to_sparse(all_interactions_after_startup, rec.num_users, rec.num_items).toarray()
@@ -572,7 +574,7 @@ def plot_results(params, results, savepath, running_setting, has_std = True):
 
         # Plot the interaction matrix for the right RS
         for key in results.keys():
-            if key == "content_based" or key == "collaborative_filtering":
+            if key in ["content_based", "collaborative_filtering", "collaborative_filtering_no_impute"]:
                 if np.any(results[key]["all_interactions"]):
                     fig, axs = plt.subplots(2 if training > 0 else 1)
                     yticks = ["User " + str(i + 1) for i in range(params["num_users"])]

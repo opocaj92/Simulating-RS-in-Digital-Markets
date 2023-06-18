@@ -52,6 +52,7 @@ if __name__ == "__main__":
     parser.add_argument("--params_subdir", "-d", required = True)
     parser.add_argument("--params_name", "-p", required = True) # fname without .py
     parser.add_argument("--cb_only", "-cbo", action = "store_true")
+    parser.add_argument("--cf_only", "-cfo", action = "store_true")
     parser.add_argument("--with_hybrid_rs", "-hybrid", action = "store_true")
     parser.add_argument("--save_pdf_plots", "-plots", action = "store_true")
     parser.add_argument("--save_debug_info", "-debug", action = "store_true")
@@ -59,6 +60,8 @@ if __name__ == "__main__":
     parser.add_argument("--skip_repeated", "-skip", action = "store_true")
     args = parser.parse_args()
     params_name = args.params_name
+
+    assert not (args.cb_only and args.cf_only), "Can't have cf_only and cb_only"
 
     # Load params
     import importlib
@@ -88,8 +91,10 @@ if __name__ == "__main__":
     # Define models
     if args.cb_only:
         models = ["content_based"]
+    elif args.cf_only:
+        models = ["collaborative_filtering", "collaborative_filtering_no_impute"]
     else:
-        models = ["popularity_recommender", "content_based", "collaborative_filtering", "random_recommender", "ideal_recommender"]
+        models = ["popularity_recommender", "content_based", "collaborative_filtering", "collaborative_filtering_no_impute", "random_recommender", "ideal_recommender"]
 
     if args.with_hybrid_rs:
         # models.append("ensemble_hybrid")
