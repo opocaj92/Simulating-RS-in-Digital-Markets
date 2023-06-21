@@ -90,11 +90,17 @@ if __name__ == "__main__":
 
     # Define models
     if args.cb_only:
-        models = ["content_based"]
+        models = ["content_based_nnls", "content_based_ls"]
     elif args.cf_only:
         models = ["collaborative_filtering", "collaborative_filtering_no_impute"]
     else:
-        models = ["popularity_recommender", "content_based", "collaborative_filtering", "collaborative_filtering_no_impute", "random_recommender", "ideal_recommender"]
+        models = ["popularity_recommender", 
+                  "content_based_nnls", 
+                  "content_based_ls", 
+                  "collaborative_filtering", 
+                  "collaborative_filtering_no_impute", 
+                  "random_recommender", 
+                  "ideal_recommender"]
 
     if args.with_hybrid_rs:
         # models.append("ensemble_hybrid")

@@ -19,7 +19,8 @@ from trecs_plus.metrics import RecommendationMeasurement, InteractionMetric, Rec
 
 models = {
     "popularity_recommender": PopularityRecommender,
-    "content_based": ContentFiltering,
+    "content_based_nnls": ContentFiltering,
+    "content_based_ls": ContentFiltering,
     "collaborative_filtering": ImplicitMF,
     "collaborative_filtering_no_impute": ImplicitMF,
     "random_recommender": RandomRecommender,
@@ -112,7 +113,14 @@ def run_experiment(params, model_name, tmp_results, running_setting, init_args):
                        ) if params["num_creators"] > 0 else None
 
     # Instantiate the recommender system
-    if model_name == "content_based" or model_name == "ensemble_hybrid" or model_name == "mixed_hybrid":
+    if model_name in ["content_based_nnls", "content_based_ls", "ensemble_hybrid", "mixed_hybrid"]:
+
+        extra_args = {}
+        if model_name == "content_based_nnls":
+            extra_args["regression_type"] = "nnls"
+        elif model_name == "content_based_ls":
+            extra_args["regression_type"] = "lsq_linear"
+
         rec = models[model_name](num_attributes = params["num_attributes"],
                                  actual_user_representation = actual_user_representation,
                                  item_representation = actual_item_representation.get_component_state()["items"][0],
@@ -123,7 +131,8 @@ def run_experiment(params, model_name, tmp_results, running_setting, init_args):
                                  random_newly_created = params["random_newly_created"],
                                  forced_items = init_args["forced_items"] if params["num_forced_items"] > 0 else None,
                                  forced_period = params["forced_period"],
-                                 sort_rec_per_popularity = params["sort_rec_per_popularity"]
+                                 sort_rec_per_popularity = params["sort_rec_per_popularity"],
+                                 **extra_args
                                  )
     elif model_name == "collaborative_filtering" or model_name == "collaborative_filtering_no_impute":
         rec = models[model_name](actual_user_representation = actual_user_representation,
@@ -168,11 +177,12 @@ def run_experiment(params, model_name, tmp_results, running_setting, init_args):
                         InteractionMetric(),
                         RecommendationMetric()
                         )
-        if model_name == "content_based":
+        if model_name == "content_based_nnls":
             rec.add_metrics(NNLSCoefficientsxMetric(),
                             NNLSCoefficientsAMetric(),
                             NNLSCoefficientsbMetric()
                             )
+        # TODO: add analogue for for content_based_ls?
 
     if running_setting["more_computation"]:
         rec.add_metrics(VaryingInteractionAttrJaccard(all_users_pairs, actual_user_representation, name = "interaction_similarity_all"),
@@ -191,7 +201,7 @@ def run_experiment(params, model_name, tmp_results, running_setting, init_args):
     # Pre-train the RS with random interactions
     if params["training"] > 0:
         rec.startup_and_train(timesteps = params["training"], no_new_items = True)
-        if running_setting["save_pdf_plots"] and (model_name in ["content_based", "collaborative_filtering", "collaborative_filtering_no_impute"]):
+        if running_setting["save_pdf_plots"] and (model_name in ["content_based_nnls", "content_based_ls", "collaborative_filtering", "collaborative_filtering_no_impute"]):
             all_interactions_after_startup = rec.all_interactions
 
     # Do not pass in disable_tqdm for ImplicitMF
@@ -226,7 +236,7 @@ def run_experiment(params, model_name, tmp_results, running_setting, init_args):
             tmp_results[-1]["forced_real_attributes"] = np.transpose(rec.actual_item_attributes)[init_args["forced_items"], :]
 
     if running_setting["save_pdf_plots"]:
-        if model_name == "content_based" :
+        if model_name in ["content_based_nnls", "content_based_ls"] :
             tmp_results[-1]["all_interactions"] = rec.all_interactions.toarray()
             if params["training"] > 0:
                 tmp_results[-1]["all_interactions_after_startup"] = all_interactions_after_startup.toarray()
@@ -574,7 +584,7 @@ def plot_results(params, results, savepath, running_setting, has_std = True):
 
         # Plot the interaction matrix for the right RS
         for key in results.keys():
-            if key in ["content_based", "collaborative_filtering", "collaborative_filtering_no_impute"]:
+            if key in ["content_based_nnls", "content_based_ls", "collaborative_filtering", "collaborative_filtering_no_impute"]:
                 if np.any(results[key]["all_interactions"]):
                     fig, axs = plt.subplots(2 if training > 0 else 1)
                     yticks = ["User " + str(i + 1) for i in range(params["num_users"])]
@@ -715,7 +725,8 @@ def plot_tmp_results(params, tmp_results, savepath, running_setting):
                     df.index.name = "forced_items"
                     df.to_csv(os.path.join(tmp_savepath, "Forced_Items_Attributes" + suffix + ".csv"))
 
-                if k == "content_based":
+                # TODO create analogue for content_based_ls?
+                if k == "content_based_nnls":
                     labels = ["attr_" + str(i + 1) for i in range(params["num_attributes"])]
                     data = np.stack([np.concatenate([np.expand_dims(new_tmp_results[k]["timesteps"], 1), np.array(new_tmp_results[k]["nnls_coefficients_x"])[:, i]], axis = 1) for i in range(params["num_users"])])
                     mux = pd.Index(["user_" + str(i + 1) for i in range(params["num_users"])], name = "users")
