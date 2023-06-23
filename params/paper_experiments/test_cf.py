@@ -25,4 +25,5 @@ params = dict(
     sort_rec_per_popularity = False,
     prop_items_for_concentration_metric = 0.1,
     cf_model_params = dict(iterations = 20, reg = 0.1, weight = 40),
+    cf_num_latent_factors = 120,
 )

@@ -145,7 +145,8 @@ def run_experiment(params, model_name, tmp_results, running_setting, init_args):
                                  forced_period = params["forced_period"],
                                  sort_rec_per_popularity = params["sort_rec_per_popularity"],
                                  model_params = params["cf_model_params"] if "cf_model_params" in params.keys() else None,
-                                 impute_new_items = True if model_name == "collaborative_filtering" else False
+                                 impute_new_items = True if model_name == "collaborative_filtering" else False,
+                                 num_latent_factors= params["cf_num_latent_factors"] if "cf_num_latent_factors" in params.keys() else 10,
                                  )
     else:
         rec = models[model_name](actual_user_representation = actual_user_representation,
