@@ -10,12 +10,9 @@ from scipy import sparse
 import pandas as pd
 
 from trecs.components import Users, Items, Creators
-from trecs.models import PopularityRecommender, ContentFiltering, ImplicitMF, RandomRecommender
-from trecs.metrics import InteractionMeasurement, MSEMeasurement
+from trecs.models import PopularityRecommender, ContentFiltering, ImplicitMF, RandomRecommender, IdealRecommender, EnsembleHybrid, MixedHybrid
+from trecs.metrics import InteractionMeasurement, MSEMeasurement, RecommendationMeasurement, InteractionMetric, RecommendationMetric, ScoreMetric, CorrelationMeasurement, RecommendationRankingMetric, InteractionRankingMetric, VaryingInteractionAttributesSimilarity, VaryingInteractionAttrJaccard, VaryingRecSimilarity, VaryingRecAttributesSimilarity, VaryingRecSummedAttributesSimilarity, most_similar_users_pair, least_similar_users_pair, all_users_pairs, NNLSCoefficientsxMetric, NNLSCoefficientsAMetric, NNLSCoefficientsbMetric
 from trecs.random import Generator
-
-from trecs_plus.models import IdealRecommender, EnsembleHybrid, MixedHybrid
-from trecs_plus.metrics import RecommendationMeasurement, InteractionMetric, RecommendationMetric, ScoreMetric, CorrelationMeasurement, RecommendationRankingMetric, InteractionRankingMetric, VaryingInteractionAttributesSimilarity, VaryingInteractionAttrJaccard, VaryingRecSimilarity, VaryingRecAttributesSimilarity, VaryingRecSummedAttributesSimilarity, most_similar_users_pair, least_similar_users_pair, all_users_pairs, NNLSCoefficientsxMetric, NNLSCoefficientsAMetric, NNLSCoefficientsbMetric
 
 models = {
     "popularity_recommender": PopularityRecommender,

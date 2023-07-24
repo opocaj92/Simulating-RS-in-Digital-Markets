@@ -92,14 +92,13 @@ if __name__ == "__main__":
     if args.cb_only:
         models = ["content_based_nnls", "content_based_ls"]
     elif args.cf_only:
-        models = ["collaborative_filtering", "collaborative_filtering_no_impute"]
+        models = ["collaborative_filtering"]
     else:
-        models = ["popularity_recommender", 
-                  "content_based_nnls", 
-                  "content_based_ls", 
-                  "collaborative_filtering", 
-                  "collaborative_filtering_no_impute", 
-                  "random_recommender", 
+        models = ["popularity_recommender",
+                  "content_based_nnls",
+                  "content_based_ls",
+                  "collaborative_filtering",
+                  "random_recommender",
                   "ideal_recommender"]
 
     if args.with_hybrid_rs:
