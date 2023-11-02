@@ -10,9 +10,12 @@ from scipy import sparse
 import pandas as pd
 
 from trecs.components import Users, Items, Creators
-from trecs.models import PopularityRecommender, ContentFiltering, ImplicitMF, RandomRecommender, IdealRecommender, EnsembleHybrid, MixedHybrid
-from trecs.metrics import InteractionMeasurement, MSEMeasurement, RecommendationMeasurement, InteractionMetric, RecommendationMetric, ScoreMetric, CorrelationMeasurement, RecommendationRankingMetric, InteractionRankingMetric, VaryingInteractionAttributesSimilarity, VaryingInteractionAttrJaccard, VaryingRecSimilarity, VaryingRecAttributesSimilarity, VaryingRecSummedAttributesSimilarity, most_similar_users_pair, least_similar_users_pair, all_users_pairs, NNLSCoefficientsxMetric, NNLSCoefficientsAMetric, NNLSCoefficientsbMetric
+from trecs.models import PopularityRecommender, ContentFiltering, ImplicitMF, RandomRecommender
+from trecs.metrics import InteractionMeasurement, MSEMeasurement
 from trecs.random import Generator
+
+from trecs_plus.models import IdealRecommender, EnsembleHybrid, MixedHybrid
+from trecs_plus.metrics import RecommendationMeasurement, InteractionMetric, RecommendationMetric, ScoreMetric, CorrelationMeasurement, RecommendationRankingMetric, InteractionRankingMetric, VaryingInteractionAttributesSimilarity, VaryingInteractionAttrJaccard, VaryingRecSimilarity, VaryingRecAttributesSimilarity, VaryingRecSummedAttributesSimilarity, most_similar_users_pair, least_similar_users_pair, all_users_pairs, NNLSCoefficientsxMetric, NNLSCoefficientsAMetric, NNLSCoefficientsbMetric
 
 models = {
     "popularity_recommender": PopularityRecommender,
@@ -298,12 +301,10 @@ def process_tmp_results(params, tmp_results, running_setting):
 
     if np.isnan(tmp_results[-1]["correlation"]).all():
         tmp_results[-1]["recommendation_quality"] = np.mean(np.concatenate([np.expand_dims(tmp_results[-1]["recommendation_ranking"], 1),
-                                                                            np.expand_dims(tmp_results[-1]["score"], 1),
                                                                             np.expand_dims(tmp_results[-1]["interaction_ranking"], 1)], axis = 1), axis = 1)
     else:
         tmp_results[-1]["correlation"] = np.nan_to_num(tmp_results[-1]["correlation"])
         tmp_results[-1]["recommendation_quality"] = np.mean(np.concatenate([np.expand_dims(tmp_results[-1]["correlation"], 1),
-                                                                            np.expand_dims(tmp_results[-1]["score"], 1),
                                                                             np.expand_dims(tmp_results[-1]["recommendation_ranking"], 1),
                                                                             np.expand_dims(tmp_results[-1]["interaction_ranking"], 1)], axis = 1), axis = 1)
 
